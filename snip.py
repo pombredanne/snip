@@ -7,7 +7,11 @@ import blessings
 import whoosh.index as windex
 import magic
 import codecs
-import argh
+from pygments.lexers import guess_lexer
+from pygments import highlight
+from pygments.formatters import TerminalFormatter
+import pyperclip
+
 
 term = blessings.Terminal()
 
@@ -24,6 +28,7 @@ exclude_files = []
 from whoosh.fields import Schema, TEXT, ID, STORED
 from whoosh.analysis import StemmingAnalyzer
 from whoosh.qparser import QueryParser
+from whoosh.index import EmptyIndexError
 
 schema = Schema(path=ID(stored=True, unique=True), type=TEXT(stored=True), body=TEXT(stored=True), time=STORED)
 
@@ -33,7 +38,11 @@ schema = Schema(path=ID(stored=True, unique=True), type=TEXT(stored=True), body=
 def search(*args):
     """search for a term"""
     indexdir = data_folder
-    ix = windex.open_dir(indexdir)
+    try:
+        ix = windex.open_dir(indexdir)
+    except EmptyIndexError as e:
+        print('No Index found! Clone some repos or run index!')
+        exit(0)
     with ix.searcher() as searcher:
         query = QueryParser("body", schema).parse(' '.join(args))
         results = searcher.search(query)
@@ -69,6 +78,7 @@ def index():
                         logger.error('cant index %s: %s' % (os.path.join(root, file), e))
     writer.commit(optimize=True)
 
+
 def pull():
     """pull all repos """
     for folder in next(os.walk(repos_folder))[1]:
@@ -85,8 +95,45 @@ def pull():
     index()
 
 
-if __name__ == "__main__":
-    parser = argh.ArghParser()
-    parser.add_commands([pull, index, search])
+def show(args):
+    with open(args.file, 'r') as f:
+        lines = '\n'.join(f.readlines())
 
-    parser.dispatch()
+    lexer = guess_lexer(lines)
+    formatter = TerminalFormatter()
+    result = highlight(lines, lexer, formatter)
+    print(result)
+
+    if args.copy:
+        pyperclip.copy(lines)
+        print('copied to clipboard')
+    pass
+
+def add(args):
+    print('this adds a repo some time in the future..')
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
+    subparsers = parser.add_subparsers(dest='cmd')
+
+    search_parser = subparsers.add_parser('search', aliases=['s'], help='search snippets')
+    search_parser.add_argument('term')
+    search_parser.set_defaults(func=search)
+
+    index_parser = subparsers.add_parser('index', help='')
+    index_parser.set_defaults(func=index)
+
+    pull_parser = subparsers.add_parser('pull', help='')
+    pull_parser.set_defaults(func=pull)
+
+    show_parser = subparsers.add_parser('show', help='')
+    show_parser.add_argument('file')
+    show_parser.add_argument('-c', '--copy', action='store_true', help='copy to clipboard (#TODO)')
+    show_parser.set_defaults(func=show)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
