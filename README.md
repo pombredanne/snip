@@ -12,13 +12,15 @@ index & search in (snippet-)repos
 
   clone this repo
   
-  pyvenv-3.4 env
-  source env/bin/activate (bash)
-  . env/bin/activate.fish (fish)
+      cd snip
+      pyvenv-3.4 env
+      source env/bin/activate (bash)
+      . env/bin/activate.fish (fish)
+      pip install -r requirements.txt
   
   then you can clone snippet repos to snip/repos.
   
-  snip will index them alter a "snip.py pull" or if you run "snip.py index"
+  snip will index them after a "snip.py pull" (which will pull all repos in snip/repos first) or if you run "snip.py index"
   
 ## usage
 
