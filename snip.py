@@ -10,7 +10,7 @@ import git
 import blessings
 import whoosh.index as windex
 import whoosh.highlight as whighlight
-from whoosh.highlight import PinpointFragmenter
+from whoosh.highlight import ContextFragmenter
 import magic
 import codecs
 from pygments.lexers import guess_lexer
@@ -37,7 +37,7 @@ from whoosh.fields import Schema, TEXT, ID, STORED, NUMERIC
 from whoosh.qparser import QueryParser
 from whoosh.index import EmptyIndexError
 
-schema = Schema(path=ID(stored=True, unique=True), type=TEXT(stored=True), body=TEXT(stored=True, chars=True), time=STORED, line=NUMERIC(stored=True))
+schema = Schema(path=ID(stored=True, unique=True), type=TEXT(stored=True), body=TEXT(stored=True, chars=True), time=STORED)
 
 # todo: incremental indexing https://whoosh.readthedocs.org/en/latest/indexing.html
 
@@ -65,7 +65,7 @@ def search(terms):
         results.formatter = termformat
 
         #hi = whighlight.Highlighter(fragmenter=PinpointFragmenter)
-        results.fragmenter = PinpointFragmenter()
+        results.fragmenter = ContextFragmenter()
 
         for result in results:
             print('{0:-<40}'.format(term.bold(result['path'])))
@@ -140,8 +140,6 @@ if __name__ == "__main__":
     parser = ArghParser()
     parser.add_commands([pull, show, search, index])
     autocomplete(parser)
-    import argh
-    print(argh.completion.COMPLETION_ENABLED)
     parser.dispatch()
 
 
