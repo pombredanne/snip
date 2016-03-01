@@ -1,10 +1,16 @@
+#!/usr/bin/python3
 __author__ = 'meatpuppet'
 
-import argparse, logging
+import logging
+from argh import ArghParser
+from argh.decorators import aliases, arg
+from argh.completion import autocomplete
 import os
 import git
 import blessings
 import whoosh.index as windex
+import whoosh.highlight as whighlight
+from whoosh.highlight import PinpointFragmenter
 import magic
 import codecs
 from pygments.lexers import guess_lexer
@@ -18,24 +24,33 @@ term = blessings.Terminal()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-repos_folder = os.path.abspath('repos')
+skript_path = os.path.dirname(os.path.realpath(__file__))
 
-data_folder = os.path.abspath('data')
+repos_folder = os.path.join(skript_path, 'repos')
+
+data_folder = os.path.join(skript_path, 'data')
 
 exclude_dirs = ['.git']
 exclude_files = []
 
-from whoosh.fields import Schema, TEXT, ID, STORED
-from whoosh.analysis import StemmingAnalyzer
+from whoosh.fields import Schema, TEXT, ID, STORED, NUMERIC
 from whoosh.qparser import QueryParser
 from whoosh.index import EmptyIndexError
 
-schema = Schema(path=ID(stored=True, unique=True), type=TEXT(stored=True), body=TEXT(stored=True), time=STORED)
+schema = Schema(path=ID(stored=True, unique=True), type=TEXT(stored=True), body=TEXT(stored=True, chars=True), time=STORED, line=NUMERIC(stored=True))
 
 # todo: incremental indexing https://whoosh.readthedocs.org/en/latest/indexing.html
 
+class TermFormatter(whighlight.Formatter):
+    def format_token(self, text, token, replace=False):
+        # Use the get_text function to get the text corresponding to the
+        # token
+        tokentext = whighlight.get_text(text, token, replace)
+        return term.bold(tokentext)
 
-def search(*args):
+@arg('terms', nargs='+')
+@aliases('s')
+def search(terms):
     """search for a term"""
     indexdir = data_folder
     try:
@@ -44,11 +59,20 @@ def search(*args):
         print('No Index found! Clone some repos or run index!')
         exit(0)
     with ix.searcher() as searcher:
-        query = QueryParser("body", schema).parse(' '.join(args))
-        results = searcher.search(query)
+        query = QueryParser("body", schema).parse(' '.join(terms))
+        results = searcher.search(query, terms=True)
+        termformat = TermFormatter()
+        results.formatter = termformat
+
+        #hi = whighlight.Highlighter(fragmenter=PinpointFragmenter)
+        results.fragmenter = PinpointFragmenter()
+
         for result in results:
-            #print(result)
-            print('{:<30}'.format(term.bold("[" + result['type'] + "]")) + result['path'].split(repos_folder)[1])
+            print('{0:-<40}'.format(term.bold(result['path'])))
+            print(term.bold("[" + result['type'] + "]") + '--preview:')
+
+            print(result.highlights('body'))
+            print('\n')
 
 
 def index():
@@ -94,9 +118,11 @@ def pull():
     print("re-indexing...")
     index()
 
-
-def show(args):
-    with open(args.file, 'r') as f:
+@arg('file')
+@arg('-c', '--copy', default=False)
+def show(file, copy='copy'):
+    """show and highlight file"""
+    with open(os.path.join(repos_folder, file), 'r') as f:
         lines = '\n'.join(f.readlines())
 
     lexer = guess_lexer(lines)
@@ -104,36 +130,19 @@ def show(args):
     result = highlight(lines, lexer, formatter)
     print(result)
 
-    if args.copy:
+    if copy:
         pyperclip.copy(lines)
-        print('copied to clipboard')
+        print(term.bold('[copied to clipboard]'))
     pass
-
-def add(args):
-    print('this adds a repo some time in the future..')
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = ArghParser()
+    parser.add_commands([pull, show, search, index])
+    autocomplete(parser)
+    import argh
+    print(argh.completion.COMPLETION_ENABLED)
+    parser.dispatch()
 
-    subparsers = parser.add_subparsers(dest='cmd')
-
-    search_parser = subparsers.add_parser('search', aliases=['s'], help='search snippets')
-    search_parser.add_argument('term')
-    search_parser.set_defaults(func=search)
-
-    index_parser = subparsers.add_parser('index', help='')
-    index_parser.set_defaults(func=index)
-
-    pull_parser = subparsers.add_parser('pull', help='')
-    pull_parser.set_defaults(func=pull)
-
-    show_parser = subparsers.add_parser('show', help='')
-    show_parser.add_argument('file')
-    show_parser.add_argument('-c', '--copy', action='store_true', help='copy to clipboard (#TODO)')
-    show_parser.set_defaults(func=show)
-
-    args = parser.parse_args()
-    args.func(args)
 
 
