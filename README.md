@@ -26,8 +26,19 @@ index & search in (snippet-)repos
 
 you should set an alias to "snip" (or so) so you dont have to type the whole "python 3 snip search..." thing
  
-   alias snip="/home/user/snip/env/bin/python3 /home/user/snip/snip.py"
+#### bash (in .bashrc):
+   
+    alias snip="/home/user/snip/env/bin/python3 /home/user/snip/snip.py"
 
+#### fish
+    function snip
+        /home/user/snip/env/bin/python3 /home/user/snip/snip.py $argv
+    end
+
+    funcsave snip
+   
+
+usage:
       
       > snip -h
       usage: snip.py [-h] {pull,show,search,s,index} ...
