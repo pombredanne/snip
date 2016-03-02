@@ -123,7 +123,7 @@ def pull():
 def show(file, copy='copy'):
     """show and highlight file"""
     with open(os.path.join(repos_folder, file), 'r') as f:
-        lines = '\n'.join(f.readlines())
+        lines = ''.join(f.readlines())
 
     lexer = guess_lexer(lines)
     formatter = TerminalFormatter()
