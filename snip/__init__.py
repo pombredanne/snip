@@ -18,7 +18,7 @@ schema = Schema(path=ID(stored=True, unique=True), type=TEXT(stored=True), body=
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-skript_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
+skript_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 repos_folder = os.path.join(skript_path, 'repos')
 
@@ -53,7 +53,7 @@ def _index():
                 with codecs.open(os.path.join(root, file), "r", errors='surrogateescape') as raw:
                     try:
                         content = raw.read()
-                        writer.add_document(path=os.path.join(root, file), type=mimetype_split[1], body=content)
+                        writer.add_document(path=os.path.normpath(os.path.join(root, file)), type=mimetype_split[1], body=content)
                     except Exception as e:
                         logger.error('cant index %s: %s' % (os.path.join(root, file), e))
     writer.commit(optimize=True)
