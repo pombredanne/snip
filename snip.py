@@ -8,11 +8,13 @@ from argh.completion import autocomplete
 
 # todo: incremental indexing https://whoosh.readthedocs.org/en/latest/indexing.html
 
+
 def web():
     from snip.web import web
     import webbrowser
     webbrowser.open('http://localhost:5000')
     web.app.run()
+
 
 if __name__ == "__main__":
     parser = ArghParser()

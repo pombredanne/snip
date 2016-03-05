@@ -32,9 +32,8 @@ def index():
     results = []
     form = SearchForm()
     if form.validate_on_submit():
-        print('searching for %s' % form.search.data)
         results = search(form.search.data)
-        print(results)
+        #print(results)
         pass
     return render_template('index.html', results=results, form=form)
 
@@ -60,7 +59,7 @@ def search(terms):
         results.fragmenter = ContextFragmenter()
         ret = []
         for result in results:
-            print('\n'.join(result['body'].split('\\n')))
+            #print('\n'.join(result['body'].split('\\n')))
             try:
                 l = guess_lexer('\n'.join(result['body'].split('\\n')))
 
