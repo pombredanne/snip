@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block styles %}
+{{super()}}
+<link rel="stylesheet"
+      href="{{url_for('static', filename='code-default.css')}}">
+{% endblock %}
+
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-3">
+        <div class="affix">
+            <form method="POST" action="/">
+                {{ form.csrf_token }}
+                {{ form.search.label }} {{ form.search(size=20) }}
+                <input type="submit" value="Go">
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-9">
+            {% for r in results %}
+            <div class="panel panel-default">
+                <div class="panel-heading">{{ r['path'] }}</div>
+                <div class="panel-body">
+                    {% autoescape false %}
+                    {{ r['body'] }}
+                    {% endautoescape %}
+                </div>
+            </div>
+            {% endfor %}
+
+    </div>
+</div>
+{% endblock content %}
