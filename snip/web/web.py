@@ -74,8 +74,6 @@ def search(terms):
             })
         return ret
 
-
-
 def pull():
     """pull all repos """
     for repo in _get_repos():
@@ -88,19 +86,3 @@ def pull():
 
     print("re-indexing...")
     index()
-
-
-def show(file, copy='copy'):
-    """show and highlight file"""
-    with open(file, 'r') as f:
-        lines = '\n'.join(f.readlines())
-
-    lexer = guess_lexer(lines)
-    formatter = TerminalFormatter()
-    result = highlight(lines, lexer, formatter)
-    print(result)
-
-    if copy:
-        pyperclip.copy(lines)
-        print(term.bold('[copied to clipboard]'))
-    pass
