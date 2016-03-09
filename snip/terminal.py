@@ -4,7 +4,7 @@ from argh.decorators import aliases, arg
 
 import blessings
 import whoosh.highlight as whighlight
-from pygments.lexers import guess_lexer
+from pygments.lexers import guess_lexer, PythonLexer
 from pygments import highlight
 from pygments.formatters import TerminalFormatter
 import pyperclip
@@ -72,8 +72,10 @@ def show(file, copy='copy'):
     """show and highlight file"""
     with open(file, 'r') as f:
         lines = ''.join(f.readlines())
-
-    lexer = guess_lexer(lines)
+    try:
+        lexer = guess_lexer(lines)
+    except:
+        lexer = PythonLexer()
     formatter = TerminalFormatter()
     result = highlight(lines, lexer, formatter)
     print(result)
